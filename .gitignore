@@ -1,0 +1,15 @@
+# ***************************
+# |docname| - Ignores for Git
+# ***************************
+#
+# Runestone output
+build
+
+# Python cache
+__pycache__
+
+# CodeChat output
+sphinx_settings.json
+
+# Where does this come from?
+build_info
