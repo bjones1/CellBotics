@@ -1,0 +1,1 @@
+.. codeinclude:: ../../conf.py

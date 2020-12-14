@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+**********************************************
+|docname| - A test website for BLE interaction
+**********************************************
+This is a simple web site to test out code for BLE interaction with a CellBot.
+
+Helpful sites:
+
+-   Communicating with Bluetooth devices over JavaScript <https://web.dev/bluetooth/>`_
+-   `Web Bluetooth Samples <https://googlechrome.github.io/samples/web-bluetooth/>`_
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>CellBotics test</title>
+    </head>
+
+    <body>
+        <button id="ble_pair_button" type="button" onclick="ble_pair()">Pair</button>
+        <span id="ble_pair_status">Disconnected.</span>
+        <script src="ble.js"></script>
+    </body>
+</html>

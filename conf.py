@@ -70,12 +70,18 @@ release = '0.0'
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 
+# `exclude_patterns <http://sphinx-doc.org/config.html#confval-exclude_patterns>`_:
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = []
 
-# The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+# `default_role <http://www.sphinx-doc.org/en/stable/config.html#confval-default_role>`_
+# The name of a reST role (builtin or Sphinx extension) to use as the default
+# role, that is, for text marked up ```like this```.
+#
+# See the `:any: role <http://www.sphinx-doc.org/en/stable/markup/inline.html#role-any>`_,
+# which suggests this use.
+default_role = "any"
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
@@ -110,7 +116,7 @@ rst_prolog = (
 .. |blank| replace:: :blank:`x`
 """
 
-# For literate programming files, provide a convenient way to refer to a source file's name. See `runestone.lp.lp._docname_role`.
+# For literate programming files, provide a convenient way to refer to a source file's name.
 """.. |docname| replace:: :docname:`name`
 """
 )
@@ -137,6 +143,9 @@ CodeChat_lexer_for_glob = {
     '*.css': 'CSS',
     # ... and for JavaScript.
     '*.js': 'JavaScript',
+    # These files use # as a comment symbol, so call them Perl.
+    ".gitignore": "Perl",
+    "codechat_config.json": "Perl",
 }
 #
 # **CodeChat note::** This is a list of exclude_patterns_ which applies only to
@@ -228,10 +237,10 @@ html_short_title ='Runestone Interactive Overview'
 # pixels large.
 #html_favicon = None
 
+# `html_static_path <http://sphinx-doc.org/config.html#confval-html_static_path>`_:
 # Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-
+# relative to this directory. They are copied after the builtin static files, so
+# a file named ``default.css`` will overwrite the builtin ``default.css``.
 html_static_path = runestone_static_dirs()
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
@@ -282,7 +291,6 @@ htmlhelp_basename = 'PythonCoursewareProjectdoc'
 #
 # accessibility_style
 # -------------------
-# This config value is defined in the `../../accessibility/accessibility.py` extension.
 # By this config value you can select what accessibility stylesheet
 # you want to add (``normal``, ``light``, ``darkest`` or ``none``).
 #accessibility_style = 'normal'
