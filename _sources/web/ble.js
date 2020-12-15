@@ -178,15 +178,15 @@ class CellBotBle {
 
 // Provide a simple pair/disconnect GUI for the CellBot Bluetooth connection.
 class CellBotBleGui {
-    constructor() {
+    constructor(pair_button_id, pair_status_id) {
         this.PB1 = 0;
         this.LED1 = 2;
 
         this.INPUT = 1;
         this.OUTPUT = 2;
 
-        this.ble_pair_button = document.getElementById("ble_pair_button");
-        this.ble_pair_status = document.getElementById("ble_pair_status");
+        this.ble_pair_button = document.getElementById(pair_button_id);
+        this.ble_pair_status = document.getElementById(pair_status_id);
 
         this.cell_bot_ble = new CellBotBle();
     }
@@ -215,6 +215,7 @@ class CellBotBleGui {
             console.log(await this.cell_bot_ble.ledcAttachPin(this.LED1, 0));
             console.log(await this.cell_bot_ble.ledcWrite(0, 32767));
         } else {
+            // BUG: sometimes, the button status is out of date. So, this may
             this.cell_bot_ble.server.disconnect();
         }
     }
@@ -231,19 +232,11 @@ class CellBotBleGui {
 
 let cell_bot_ble_gui;
 
-function on_dom_ready() {
-    cell_bot_ble_gui = new CellBotBleGui();
-}
-
-
-// This is invoked after the DOM is ready.
-(function() {
-    on_dom_ready();
-})();
-
-
-// Pair with the CellBot.
-function ble_pair()
+// Handle a click to the "Pair" (or "Disconnect") button.
+function ble_pair_clicked()
 {
+    if (cell_bot_ble_gui === undefined) {
+        cell_bot_ble_gui = new CellBotBleGui("ble_pair_button", "ble_pair_status");
+    }
     cell_bot_ble_gui.async_on_pair_clicked().then();
 }
