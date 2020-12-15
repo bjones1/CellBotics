@@ -1,40 +1,15 @@
-**********
-CellBotics
-**********
-This project combines any device that runs a web browser and has Bluetooth (cell phone/tablet/laptop) with two motors to allow users to program their own robot. Get started with `book/toctree`!
+*******************
+Hands-on CellBotics
+*******************
+This books enables you to build your own CellBot -- a simple moving base combined with a smart device such as a cell phone, tablet, or laptop. With this simple, low-cost combination, learn to create amazing robots!
 
-
-Book
-====
 .. toctree::
     :maxdepth: 2
 
-    book/toctree
-
-
-Core code
-=========
-.. toctree::
-    :maxdepth: 2
-
-    Arduino/motor_control/motor_control.ino
-    Arduino/BLE_server/BLE_server.ino
-    web/toctree
-
-
-Documentation support
-=====================
-.. toctree::
-    :maxdepth: 2
-
-    docs/.gitignore
-    docs/conf.py
-    docs/pavement.py
-    docs/codechat_config.json
+    implementation
 
 
 Indices and tables
 ==================
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
