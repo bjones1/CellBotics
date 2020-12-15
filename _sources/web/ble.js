@@ -54,6 +54,7 @@ class CellBotBle {
         this.digitalWrite_char = await service.getCharacteristic("d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d");
         this.digitalRead_char = await service.getCharacteristic("c370bc79-11c1-4530-9f69-ab9d961aa497");
         this.ledcSetup_char = await service.getCharacteristic("6be57cea-3c46-4687-972b-03429d2acf9b");
+        this.ledcAttachPin_char = await service.getCharacteristic("2cd63861-078f-436f-9ed9-79e57ec8b638");
         this.ledcWrite_char = await service.getCharacteristic("40698030-a343-448f-a9ea-54b39b03bf81");
     }
 
@@ -132,7 +133,20 @@ class CellBotBle {
         return this.invoke_Arduino(this.digitalWrite_char, 0, new Uint8Array([u8_pin, u8_value]));
     }
 
+    // Invoke `digitalRead <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalread/>`_ on the Arduino.
+    async digitalRead(u8_pin) {
+        return this.invoke_Arduino(this.digitalRead_char, 1, new Uint8Array([u8_pin]));
+    }
+
     // Invoke ``ledcSetup`` on the Arduino.
+    //
+    // Note that the LEDC control on the ESP32 Arduino port isn't documented. Here's my attempts. The best reference is the `LED_PWM chapter of the ESP32 Technical Reference Manual <https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf#page=384>`_. To set up PWM, you need to select:
+    //
+    // -    A channel (channels 0-7 auto-update new PWM periods, channels 8-15 don't).
+    // -    The frequency to do the PWM -- either 80 MHz or 1 MHz.
+    // -    A number of bits used to do the PWM. The maximum possible value is floor(log2(processor clock frequency/PWM frequency)); this cannot exceed 20.
+    //
+    // The function returns the actual PWM frequency, due to the limitations of the available clock divisor.
     async ledcSetup(u8_channel, d_freq, u8_resolution_bits) {
         let param_array = new ArrayBuffer(11);
         let dv = new DataView(param_array);
@@ -142,7 +156,16 @@ class CellBotBle {
         return this.invoke_Arduino(this.ledcSetup_char, 0.8, param_array);
     }
 
+    // Invoke ``ledcAttachPin`` on the Arduino.
+    //
+    // Next, attach this channel to a specific pin on the Arduino.
+    async ledcAttachPin(u8_pin, u8_channel) {
+        return this.invoke_Arduino(this.ledcAttachPin_char, 0, new Uint8Array([u8_pin, u8_channel]));
+    }
+
     // Invoke ``ledcWrite`` on the Arduino.
+    //
+    // Finally, select a duty cycle for that channel, from 2^num_bits to 1.
     async ledcWrite(u8_channel, u32_duty) {
         let param_array = new ArrayBuffer(5);
         let dv = new DataView(param_array);
@@ -150,12 +173,6 @@ class CellBotBle {
         dv.setUint32(1, u32_duty, this.is_little_endian);
         return this.invoke_Arduino(this.ledcWrite_char, 0, param_array);
     }
-
-    // Invoke `digitalRead <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalread/>`_ on the Arduino.
-    async digitalRead(u8_pin) {
-        return this.invoke_Arduino(this.digitalRead_char, 1, new Uint8Array([u8_pin]));
-    }
-
 }
 
 
@@ -194,7 +211,9 @@ class CellBotBleGui {
             console.log(await this.cell_bot_ble.pinMode(this.PB1, this.INPUT));
             console.log(await this.cell_bot_ble.digitalWrite(this.LED1, 1));
             console.log(await this.cell_bot_ble.digitalRead(this.PB1));
-            console.log(await this.cell_bot_ble.ledcWrite(3, 0x12345678));
+            console.log(await this.cell_bot_ble.ledcSetup(0, 1000, 16));
+            console.log(await this.cell_bot_ble.ledcAttachPin(this.LED1, 0));
+            console.log(await this.cell_bot_ble.ledcWrite(0, 32767));
         } else {
             this.cell_bot_ble.server.disconnect();
         }

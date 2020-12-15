@@ -11,11 +11,7 @@
 #include <BLEServer.h>
 #include <BLECharacteristic.h>
 
-// To wrap:
-//
-// -    ``void ledcAttachPin(uint8_t pin, uint8_t channel)``
-//
-//
+
 // Macros
 // ======
 //
@@ -35,6 +31,8 @@
 #define DIGITAL_READ_CHARACTERISTIC_UUID ("c370bc79-11c1-4530-9f69-ab9d961aa497")
 // Characteristic for ledcSetup
 #define LEDC_SETUP_CHARACTERISTIC_UUID ("6be57cea-3c46-4687-972b-03429d2acf9b")
+// Characteristic for ledcAttachPin
+#define LEDC_ATTACH_PIN_CHARACTERISTIC_UUID ("2cd63861-078f-436f-9ed9-79e57ec8b638")
 // Characteristic for ledcWrite
 #define LEDC_WRITE_CHARACTERISTIC_UUID ("40698030-a343-448f-a9ea-54b39b03bf81")
 
@@ -126,6 +124,52 @@ class DigitalReadCallback: public InvokeArduinoCallback {
 };
 
 
+// Same as above, for ``ledcSetup``.
+class LedcSetupCallback: public InvokeArduinoCallback {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+        // This wraps:
+        /// ret[0:7]            value[0]      value[9:1]         value[10]
+        /// double ledcSetup(uint8_t channel, double freq, uint8_t resolution_bits)
+        double d_ret;
+        uint8_t u8_channel;
+        double d_freq;
+        uint8_t u8_resolution_bits;
+
+        if (checkLength(11, pCharacteristic)) {
+            // Extract function parameters.
+            u8_channel = static_cast<uint8_t>(value[0]);
+            memcpy(&d_freq, value.data() + 1, 8);
+            u8_resolution_bits = static_cast<uint8_t>(value[10]);
+
+            // Call the function.
+            d_ret = ledcSetup(u8_channel, d_freq, u8_resolution_bits);
+            ret.assign(reinterpret_cast<char*>(&d_ret), 8);
+            snprintf(buf, sizeof(buf), "%lf = ledcSetup(%u, %lf, %u)\n", d_ret, u8_channel, d_freq, u8_resolution_bits);
+            ret.replace(8, 92, buf);
+        }
+    };
+};
+
+
+// Same as above, for ``ledcAttachPin``.
+class ledcAttachPinCallback: public InvokeArduinoCallback {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+        ///                           value[0]     value[1]
+        /// void void ledcAttachPin(uint8_t pin, uint8_t channel)
+        uint8_t u8_pin;
+        uint8_t u8_channel;
+
+        if (checkLength(2, pCharacteristic)) {
+            u8_pin = static_cast<uint8_t>(value[0]);
+            u8_channel = static_cast<uint8_t>(value[1]);
+            snprintf(buf, sizeof(buf), "ledcAttachPin(%u, %u)\n", u8_pin, u8_channel);
+            ret.assign(buf);
+            ledcAttachPin(u8_pin, u8_channel);
+        }
+    };
+};
+
+
 // Same as above, for ``ledcWrite``.
 class LedcWriteCallback: public InvokeArduinoCallback {
     void onWrite(BLECharacteristic* pCharacteristic) {
@@ -142,36 +186,9 @@ class LedcWriteCallback: public InvokeArduinoCallback {
             memcpy(&u32_duty, value.data() + 1, 4);
 
             // Call the function.
-            snprintf(buf, sizeof(buf), "ledcWrite(%u, 0x%X)\n", u8_channel, u32_duty);
+            snprintf(buf, sizeof(buf), "ledcWrite(%u, %u)\n", u8_channel, u32_duty);
             ret.assign(buf);
-            //ledcWrite(u8_channel, u32_duty);
-        }
-    };
-};
-
-
-// Same as above, for ``ledcWrite``.
-class LedcSetupCallback: public InvokeArduinoCallback {
-    void onWrite(BLECharacteristic* pCharacteristic) {
-        // This wraps:
-        ///                       value[0]    value[9:1]         value[10]
-        /// double ledcSetup(uint8_t channel, double freq, uint8_t resolution_bits)
-        uint8_t u8_channel;
-        double d_freq;
-        uint8_t u8_resolution_bits;
-        double d_ret;
-
-        if (checkLength(11, pCharacteristic)) {
-            // Extract function parameters.
-            u8_channel = static_cast<uint8_t>(value[0]);
-            memcpy(&d_freq, value.data() + 1, 8);
-            u8_resolution_bits = static_cast<uint8_t>(value[10]);
-
-            // Call the function.
-            snprintf(buf, sizeof(buf), "ledcSetup(%u, %lf, %u)\n", u8_channel, d_freq, u8_resolution_bits);
-            ret.replace(9, 91, buf);
-            d_ret = ledcSetup(u8_channel, d_freq, u8_resolution_bits);
-            ret.assign(static_cast<char>(d_ret), 8);
+            ledcWrite(u8_channel, u32_duty);
         }
     };
 };
@@ -222,6 +239,13 @@ void setup() {
         BLECharacteristic::PROPERTY_WRITE
     );
     pCharacteristic->setCallbacks(new LedcWriteCallback());
+
+    pCharacteristic = pService->createCharacteristic(
+        LEDC_ATTACH_PIN_CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_WRITE
+    );
+    pCharacteristic->setCallbacks(new ledcAttachPinCallback());
 
     pService->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
