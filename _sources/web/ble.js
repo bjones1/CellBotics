@@ -8,6 +8,8 @@
 class CellBotBle {
     constructor() {
         this.clear_connection();
+        // If true, the server (BLE device / CellBot) is little-endiang; if false, big-endian.
+        this.is_little_endian = true;
     }
 
 
@@ -50,35 +52,120 @@ class CellBotBle {
         // Get the characteristic for this service.
         this.pinMode_char = await service.getCharacteristic("6ea6d9b6-7b7e-451c-ab45-221298e43562");
         this.digitalWrite_char = await service.getCharacteristic("d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d");
-
+        this.digitalRead_char = await service.getCharacteristic("c370bc79-11c1-4530-9f69-ab9d961aa497");
+        this.ledcSetup_char = await service.getCharacteristic("6be57cea-3c46-4687-972b-03429d2acf9b");
+        this.ledcWrite_char = await service.getCharacteristic("40698030-a343-448f-a9ea-54b39b03bf81");
     }
 
-    // Generic access function
-    async invoke_Arduino(characteristic) {
-        // Get function args[1:].
-        let args = Array.prototype.slice.call(arguments, 1);
-        await characteristic.writeValue(new Uint8Array(args));
-        // Read the return value and return it.
-        let val = await characteristic.readValue();
-        return String.fromCharCode.apply(null, new Uint8Array(val.buffer));
+    // Generic access function for calling a function on the Arduino. It returns (value returned after invoking the function, message).
+    async invoke_Arduino(
+        // The Bluetooth characteristic to use for this call.
+        characteristic,
+        // The number of bytes in the return value:
+        //
+        // -    0: void
+        // -    +1/-1: unsigned/signed 8-bit value
+        // -    +2/-2: unsigned/signed 16-bit value
+        // -    +4/-4: unsigned/signed 32-bit value
+        // -    0.4/0.8: 32-bit/64-bit float
+        return_bytes,
+        // An ArrayBuffer or compatible type of data containing encoded parameters to send.
+        param_array
+    ) {
+        await characteristic.writeValue(param_array);
+        // Read the returned data.
+        let return_data = await characteristic.readValue();
+        // Interpret the return value.
+        let return_value;
+        switch (return_bytes) {
+            case 0:
+            return_value = undefined;
+            break;
+
+            case 1:
+            return_value = return_data.getUint8(0);
+            break;
+
+            case -1:
+            return_value = return_data.getInt8(0);
+            break;
+
+            case 2:
+            return_value = return_data.getUint16(0);
+            break;
+
+            case -2:
+            return_value = return_data.getInt16(0, this.is_little_endian);
+            break;
+
+            case 4:
+            return_value = return_data.getUint32(0, this.is_little_endian);
+            break;
+
+            case -4:
+            return_value = return_data.getInt32(0, this.is_little_endian);
+            break;
+
+            case 0.4:
+            return_value = return_data.getFloat32(0, this.is_little_endian);
+            return_bytes = 4;
+            break;
+
+            case 0.8:
+            return_value = return_data.getFloat64(0, this.is_little_endian);
+            return_bytes = 8;
+            break;
+
+        }
+
+        let message = return_data.buffer.slice(return_bytes);
+        return [return_value, String.fromCharCode.apply(null, new Uint8Array(message))];
     }
 
     // Invoke `pinMode <https://www.arduino.cc/reference/en/language/functions/digital-io/pinmode/>`_ on the Arduino.
-    async pinMode(pin, mode) {
-        return this.invoke_Arduino(this.pinMode_char, pin, mode);
+    async pinMode(u8_pin, u8_mode) {
+        return this.invoke_Arduino(this.pinMode_char, 0, new Uint8Array([u8_pin, u8_mode]));
     }
 
-    // Invoke `digitalWrite <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalwrite//>`_ on the Arduino.
-    async digitalWrite(pin, value) {
-        return this.invoke_Arduino(this.digitalWrite_char, pin, value);
+    // Invoke `digitalWrite <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalwrite/>`_ on the Arduino.
+    async digitalWrite(u8_pin, u8_value) {
+        return this.invoke_Arduino(this.digitalWrite_char, 0, new Uint8Array([u8_pin, u8_value]));
     }
+
+    // Invoke ``ledcSetup`` on the Arduino.
+    async ledcSetup(u8_channel, d_freq, u8_resolution_bits) {
+        let param_array = new ArrayBuffer(11);
+        let dv = new DataView(param_array);
+        dv.setUint8(0, u8_channel);
+        dv.setFloat64(1, d_freq, this.is_little_endian);
+        dv.setUint8(10, u8_resolution_bits);
+        return this.invoke_Arduino(this.ledcSetup_char, 0.8, param_array);
+    }
+
+    // Invoke ``ledcWrite`` on the Arduino.
+    async ledcWrite(u8_channel, u32_duty) {
+        let param_array = new ArrayBuffer(5);
+        let dv = new DataView(param_array);
+        dv.setUint8(0, u8_channel);
+        dv.setUint32(1, u32_duty, this.is_little_endian);
+        return this.invoke_Arduino(this.ledcWrite_char, 0, param_array);
+    }
+
+    // Invoke `digitalRead <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalread/>`_ on the Arduino.
+    async digitalRead(u8_pin) {
+        return this.invoke_Arduino(this.digitalRead_char, 1, new Uint8Array([u8_pin]));
+    }
+
 }
 
 
 // Provide a simple pair/disconnect GUI for the CellBot Bluetooth connection.
 class CellBotBleGui {
     constructor() {
+        this.PB1 = 0;
         this.LED1 = 2;
+
+        this.INPUT = 1;
         this.OUTPUT = 2;
 
         this.ble_pair_button = document.getElementById("ble_pair_button");
@@ -104,10 +191,11 @@ class CellBotBleGui {
             }
 
             console.log(await this.cell_bot_ble.pinMode(this.LED1, this.OUTPUT));
-
+            console.log(await this.cell_bot_ble.pinMode(this.PB1, this.INPUT));
             console.log(await this.cell_bot_ble.digitalWrite(this.LED1, 1));
+            console.log(await this.cell_bot_ble.digitalRead(this.PB1));
+            console.log(await this.cell_bot_ble.ledcWrite(3, 0x12345678));
         } else {
-            // TODO: we make the assumption that the text of the button (pair or disconnect) is up to date. Is this always correct?
             this.cell_bot_ble.server.disconnect();
         }
     }
