@@ -1,3 +1,21 @@
+// .. Copyright (C) 2012-2020 Bryan A. Jones.
+//
+//  This file is part of the CellBotics system.
+//
+//  The CellBotics system is free software: you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License as
+//  published by the Free Software Foundation, either version 3 of the
+//  License, or (at your option) any later version.
+//
+//  The CellBotics system is distributed in the hope that it will be
+//  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+//  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with the CellBotics system.  If not, see
+//  <http://www.gnu.org/licenses/>.
+//
 // ***************************
 // |docname| - test BLE server
 // ***************************
@@ -33,10 +51,17 @@
 #define LEDC_SETUP_CHARACTERISTIC_UUID ("6be57cea-3c46-4687-972b-03429d2acf9b")
 // Characteristic for ledcAttachPin
 #define LEDC_ATTACH_PIN_CHARACTERISTIC_UUID ("2cd63861-078f-436f-9ed9-79e57ec8b638")
+// Characteristic for ledcDetachPin
+#define LEDC_DETACH_PIN_CHARACTERISTIC_UUID ("b9b0cabe-25d8-4965-9259-7d3b6330e940")
 // Characteristic for ledcWrite
 #define LEDC_WRITE_CHARACTERISTIC_UUID ("40698030-a343-448f-a9ea-54b39b03bf81")
 
+// Define this to return a textual description of each function executed to the Bluetooth client, and also print these descriptions to the serial port.
+#define VERBOSE_RETURN
 
+
+// Characteristic callbacks
+// ========================
 class InvokeArduinoCallback: public BLECharacteristicCallbacks {
     public:
     // A buffer for messages; a C string.
@@ -63,6 +88,9 @@ class InvokeArduinoCallback: public BLECharacteristicCallbacks {
             ret.assign(buf);
             return false;
         }
+
+        // The default response is an empty string.
+        ret.clear();
         return true;
     };
 };
@@ -79,9 +107,12 @@ class PinModeCallback: public InvokeArduinoCallback {
         if (checkLength(2, pCharacteristic)) {
             u8_pin = static_cast<uint8_t>(value[0]);
             u8_mode = static_cast<uint8_t>(value[1]);
-            snprintf(buf, sizeof(buf), "pinMode(%u, %u)\n", u8_pin, u8_mode);
-            ret.assign(buf);
             pinMode(u8_pin, u8_mode);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "pinMode(%u, %u)", u8_pin, u8_mode);
+            Serial.println(buf);
+            ret.assign(buf);
+#endif
         }
     }
 };
@@ -98,9 +129,12 @@ class DigitalWriteCallback: public InvokeArduinoCallback {
         if (checkLength(2, pCharacteristic)) {
             u8_pin = static_cast<uint8_t>(value[0]);
             u8_val = static_cast<uint8_t>(value[1]);
-            snprintf(buf, sizeof(buf), "digitalWrite(%u, %u)\n", u8_pin, u8_val);
-            ret.assign(buf);
             digitalWrite(u8_pin, u8_val);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "digitalWrite(%u, %u)", u8_pin, u8_val);
+            Serial.println(buf);
+            ret.assign(buf);
+#endif
         }
     };
 };
@@ -116,9 +150,13 @@ class DigitalReadCallback: public InvokeArduinoCallback {
         if (checkLength(1, pCharacteristic)) {
             u8_pin = static_cast<uint8_t>(value[0]);
             // Although ``digitialRead`` returns an ``int``, store it in a ``char``, since we assume it's a one-bit value.
+            ret.resize(1);
             ret[0] = static_cast<char>(digitalRead(u8_pin));
-            snprintf(buf, sizeof(buf), "%u = digitalRead(%u)\n", ret[0], u8_pin);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "%u = digitalRead(%u)", ret[0], u8_pin);
+            Serial.println(buf);
             ret.replace(1, 99, buf);
+#endif
         }
     };
 };
@@ -143,9 +181,13 @@ class LedcSetupCallback: public InvokeArduinoCallback {
 
             // Call the function.
             d_ret = ledcSetup(u8_channel, d_freq, u8_resolution_bits);
+            ret.resize(8);
             ret.assign(reinterpret_cast<char*>(&d_ret), 8);
-            snprintf(buf, sizeof(buf), "%lf = ledcSetup(%u, %lf, %u)\n", d_ret, u8_channel, d_freq, u8_resolution_bits);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "%lf = ledcSetup(%u, %lf, %u)", d_ret, u8_channel, d_freq, u8_resolution_bits);
+            Serial.println(buf);
             ret.replace(8, 92, buf);
+#endif
         }
     };
 };
@@ -154,17 +196,40 @@ class LedcSetupCallback: public InvokeArduinoCallback {
 // Same as above, for ``ledcAttachPin``.
 class ledcAttachPinCallback: public InvokeArduinoCallback {
     void onWrite(BLECharacteristic* pCharacteristic) {
-        ///                           value[0]     value[1]
-        /// void void ledcAttachPin(uint8_t pin, uint8_t channel)
+        ///                      value[0]     value[1]
+        /// void ledcAttachPin(uint8_t pin, uint8_t channel)
         uint8_t u8_pin;
         uint8_t u8_channel;
 
         if (checkLength(2, pCharacteristic)) {
             u8_pin = static_cast<uint8_t>(value[0]);
             u8_channel = static_cast<uint8_t>(value[1]);
-            snprintf(buf, sizeof(buf), "ledcAttachPin(%u, %u)\n", u8_pin, u8_channel);
-            ret.assign(buf);
             ledcAttachPin(u8_pin, u8_channel);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "ledcAttachPin(%u, %u)", u8_pin, u8_channel);
+            Serial.println(buf);
+            ret.assign(buf);
+#endif
+        }
+    };
+};
+
+
+// Same as above, for ``ledcAttachPin``.
+class ledcDetachPinCallback: public InvokeArduinoCallback {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+        ///                      value[0]
+        /// void ledcDetachPin(uint8_t pin)
+        uint8_t u8_pin;
+
+        if (checkLength(2, pCharacteristic)) {
+            u8_pin = static_cast<uint8_t>(value[0]);
+            ledcDetachPin(u8_pin);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "ledcDetachPin(%u)", u8_pin);
+            Serial.println(buf);
+            ret.assign(buf);
+#endif
         }
     };
 };
@@ -186,9 +251,12 @@ class LedcWriteCallback: public InvokeArduinoCallback {
             memcpy(&u32_duty, value.data() + 1, 4);
 
             // Call the function.
-            snprintf(buf, sizeof(buf), "ledcWrite(%u, %u)\n", u8_channel, u32_duty);
-            ret.assign(buf);
             ledcWrite(u8_channel, u32_duty);
+#ifdef VERBOSE_RETURN
+            snprintf(buf, sizeof(buf), "ledcWrite(%u, %u)", u8_channel, u32_duty);
+            Serial.println(buf);
+            ret.assign(buf);
+#endif
         }
     };
 };
@@ -246,6 +314,13 @@ void setup() {
         BLECharacteristic::PROPERTY_WRITE
     );
     pCharacteristic->setCallbacks(new ledcAttachPinCallback());
+
+    pCharacteristic = pService->createCharacteristic(
+        LEDC_DETACH_PIN_CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_WRITE
+    );
+    pCharacteristic->setCallbacks(new ledcDetachPinCallback());
 
     pService->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();

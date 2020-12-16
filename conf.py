@@ -1,6 +1,24 @@
-# *************************************************************
-# |docname| - Sphinx configuration file for a Runestone project
-# *************************************************************
+# .. Copyright (C) 2012-2020 Bryan A. Jones.
+#
+#   This file is part of the CellBotics system.
+#
+#   The CellBotics system is free software: you can redistribute it and/or
+#   modify it under the terms of the GNU General Public License as
+#   published by the Free Software Foundation, either version 3 of the
+#   License, or (at your option) any later version.
+#
+#   The CellBotics system is distributed in the hope that it will be
+#   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+#   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with the CellBotics system.  If not, see
+#   <http://www.gnu.org/licenses/>.
+#
+# ******************************************************
+# |docname| - Sphinx configuration file for a CellBotics
+# ******************************************************
 #
 # Problem Solving with Algorithms and Data Structures documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct 27 08:17:45 2011.
@@ -20,7 +38,8 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('../modules'))
 
-from runestone import runestone_static_dirs, runestone_extensions, setup
+from runestone import runestone_static_dirs, runestone_extensions
+from runestone import setup as runestone_setup
 import pkg_resources
 
 # -- General configuration -----------------------------------------------------
@@ -32,7 +51,6 @@ import pkg_resources
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.mathjax'] + runestone_extensions()
 
-#,'runestone.video','runestone.reveal','runestone.poll','runestone.tabbedStuff','runestone.disqus','runestone.codelens','runestone.activecode', 'runestone.assess', 'runestone.animation','runestone.meta', 'runestone.parsons', 'runestone.blockly', 'runestone.livecode','runestone.accessibility']
 
 # This sets up your project to use the defaults.  If you want to create a custom  set of templates
 # for your own project you can over ride them by creating your own _templates folder
@@ -48,8 +66,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Runestone Interactive Overview'
-copyright = '2017 bjones'
+project = 'Hands-on CellBotics'
+copyright = '2020 Bryan A. Jones'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -221,10 +239,10 @@ html_theme_path = [pkg_resources.resource_filename('runestone', 'common/project_
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Runestone Interactive Overview'
+html_title = 'Hands-on Cellbotics'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title ='Runestone Interactive Overview'
+html_short_title ='CellBotics'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -241,7 +259,7 @@ html_short_title ='Runestone Interactive Overview'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files, so
 # a file named ``default.css`` will overwrite the builtin ``default.css``.
-html_static_path = runestone_static_dirs()
+html_static_path = runestone_static_dirs() + ["_sources/web"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -310,3 +328,9 @@ htmlhelp_basename = 'PythonCoursewareProjectdoc'
 #shortanswer_optional_div_class = 'journal alert alert-success'
 #showeval_div_class = 'runestone explainer alert alert-warning'
 #tabbed_div_class = 'alert alert-warning'
+
+# Add the BLE JS.
+def setup(app):
+    runestone_setup(app)
+    app.add_autoversioned_javascript("ble.js")
+    #app.add_autoversioned_javascript("cellbot_skulpt.js")

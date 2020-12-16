@@ -1,3 +1,21 @@
+// .. Copyright (C) 2012-2020 Bryan A. Jones.
+//
+//  This file is part of the CellBotics system.
+//
+//  The CellBotics system is free software: you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License as
+//  published by the Free Software Foundation, either version 3 of the
+//  License, or (at your option) any later version.
+//
+//  The CellBotics system is distributed in the hope that it will be
+//  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+//  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with the CellBotics system.  If not, see
+//  <http://www.gnu.org/licenses/>.
+//
 // *************************************************************
 // |docname| - JavaScript code to connect with a CellBot via BLE
 // *************************************************************
@@ -5,19 +23,62 @@
 "use strict";
 
 
+// Auto-bind
+// =========
+// The following two function were taken from https://github.com/sindresorhus/auto-bind/blob/master/index.js and lightly modified. They provide an easy way to bind all call methods to their instance. See `Binding Methods to Class Instance Objects <https://ponyfoo.com/articles/binding-methods-to-class-instance-objects>`_ for more discussion on this crazy JavaScript necessity.
+//
+// Gets all non-builtin properties up the prototype chain
+const getAllProperties = object => {
+	const properties = new Set();
+
+	do {
+		for (const key of Reflect.ownKeys(object)) {
+			properties.add([object, key]);
+		}
+	} while ((object = Reflect.getPrototypeOf(object)) && object !== Object.prototype);
+
+	return properties;
+};
+
+
+// Invoke this in the constructor of an object.
+function auto_bind(self) {
+    for (const [object, key] of getAllProperties(self.constructor.prototype)) {
+        if (key === 'constructor') {
+            continue;
+        }
+
+        const descriptor = Reflect.getOwnPropertyDescriptor(object, key);
+        if (descriptor && typeof descriptor.value === 'function') {
+            self[key] = self[key].bind(self);
+        }
+    }
+}
+
+
+
+// CellBotBle
+// ==========
+// This sends and receives data to the CellBot via Bluetooth.
 class CellBotBle {
     constructor() {
+        auto_bind(this);
+
         this.clear_connection();
-        // If true, the server (BLE device / CellBot) is little-endiang; if false, big-endian.
+        // If true, the server (BLE device / CellBot) is little-endian; if false, big-endian.
         this.is_little_endian = true;
+        // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
+        this.verbose_return = false;
+
+        // #defines from Arduino headers.
+        this.INPUT = 1;
+        this.OUTPUT = 2;
     }
 
 
-    // Clear all the Bluetooth connection-related objects.
+    // Clear Bluetooth connection-related objects.
     clear_connection() {
         this.server = undefined;
-        this.pinMode_char = undefined;
-        this.digitalWrite_char = undefined;
     }
 
     // Returns true if the Bluetooth device (server) is connected.
@@ -55,6 +116,7 @@ class CellBotBle {
         this.digitalRead_char = await service.getCharacteristic("c370bc79-11c1-4530-9f69-ab9d961aa497");
         this.ledcSetup_char = await service.getCharacteristic("6be57cea-3c46-4687-972b-03429d2acf9b");
         this.ledcAttachPin_char = await service.getCharacteristic("2cd63861-078f-436f-9ed9-79e57ec8b638");
+        this.ledcDetachPin_char = await service.getCharacteristic("b9b0cabe-25d8-4965-9259-7d3b6330e940");
         this.ledcWrite_char = await service.getCharacteristic("40698030-a343-448f-a9ea-54b39b03bf81");
     }
 
@@ -120,7 +182,11 @@ class CellBotBle {
         }
 
         let message = return_data.buffer.slice(return_bytes);
-        return [return_value, String.fromCharCode.apply(null, new Uint8Array(message))];
+        message = String.fromCharCode.apply(null, new Uint8Array(message));
+        if (!this.verbose_return) {
+            throw `BLE protocol error: ${message}`
+        }
+        return [return_value, message];
     }
 
     // Invoke `pinMode <https://www.arduino.cc/reference/en/language/functions/digital-io/pinmode/>`_ on the Arduino.
@@ -173,18 +239,19 @@ class CellBotBle {
         dv.setUint32(1, u32_duty, this.is_little_endian);
         return this.invoke_Arduino(this.ledcWrite_char, 0, param_array);
     }
+
+    // Invoke ``ledcDetachPin`` on the Arduino.
+    //
+    // Next, attach this channel to a specific pin on the Arduino.
+    async ledcDetachPin(u8_pin) {
+        return this.invoke_Arduino(this.ledcDetachPin_char, 0, new Uint8Array([u8_pin]));
+    }
 }
 
 
 // Provide a simple pair/disconnect GUI for the CellBot Bluetooth connection.
 class CellBotBleGui {
     constructor(pair_button_id, pair_status_id) {
-        this.PB1 = 0;
-        this.LED1 = 2;
-
-        this.INPUT = 1;
-        this.OUTPUT = 2;
-
         this.ble_pair_button = document.getElementById(pair_button_id);
         this.ble_pair_status = document.getElementById(pair_status_id);
 
@@ -196,7 +263,7 @@ class CellBotBleGui {
             this.ble_pair_button.disabled = true;
             this.ble_pair_status.innerHTML = "Pairing...";
             try {
-                await this.cell_bot_ble.pair(this.on_disconnect_bound());
+                await this.cell_bot_ble.pair(this.on_disconnect);
                 this.ble_pair_status.innerHTML = `Paired to ${this.cell_bot_ble.device.name}.`;
                 this.ble_pair_button.innerHTML = "Disconnect";
 
@@ -207,25 +274,14 @@ class CellBotBleGui {
                 this.ble_pair_button.disabled = false;
             }
 
-            console.log(await this.cell_bot_ble.pinMode(this.LED1, this.OUTPUT));
-            console.log(await this.cell_bot_ble.pinMode(this.PB1, this.INPUT));
-            console.log(await this.cell_bot_ble.digitalWrite(this.LED1, 1));
-            console.log(await this.cell_bot_ble.digitalRead(this.PB1));
-            console.log(await this.cell_bot_ble.ledcSetup(0, 1000, 16));
-            console.log(await this.cell_bot_ble.ledcAttachPin(this.LED1, 0));
-            console.log(await this.cell_bot_ble.ledcWrite(0, 32767));
         } else {
-            // BUG: sometimes, the button status is out of date. So, this may
             this.cell_bot_ble.server.disconnect();
         }
     }
 
-    // A reference to a class method is just a function, not a bound method. (Crazy!) Therefore, ``this`` when invoked from the callback won't refer to this class. (Really crazy.) So, create our own bound method by return a function with a ``this`` actually bound to this class. This means that ``this.ble_pair_status`` and similar references will now work.
-    on_disconnect_bound() {
-        return function() {
-            this.ble_pair_status.innerHTML = "Disconnected.";
-            this.ble_pair_button.innerHTML = "Pair";
-        }.bind(this);
+    on_disconnect() {
+        this.ble_pair_status.innerHTML = "Disconnected.";
+        this.ble_pair_button.innerHTML = "Pair";
     }
 }
 

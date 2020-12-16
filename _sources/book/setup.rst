@@ -8,13 +8,14 @@
 
     You should have received a copy of the GNU General Public License along with CellBotics.  If not, see <http://www.gnu.org/licenses/>.
 
-*************
-Web interface
-*************
-This directory contains files to explore interfacing with a CellBot via BLE.
+*****
+Setup
+*****
+This page covers the setup needed to start experimenting with you CellBot!
 
-.. toctree::
-    :maxdepth: 2
+.. raw:: html
 
-    ble.html
-    ble.js
+    <button id="ble_pair_button" type="button" onclick="ble_pair_clicked()">Pair</button>
+    <span id="ble_pair_status"></span>
+
+.. activecode:: bCulhkWMfG
