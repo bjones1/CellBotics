@@ -262,6 +262,17 @@ class LedcWriteCallback: public InvokeArduinoCallback {
 };
 
 
+// On a server disconnect, turn off the motors.
+class CellBotServerCallback : public BLEServerCallbacks {
+    virtual void onDisconnect(BLEServer* pServer) {
+#ifdef VERBOSE_RETURN
+            Serial.println("BLE disconnected.");
+#endif
+        // TODO.
+    };
+};
+
+
 // Functions
 // =========
 void setup() {
@@ -271,6 +282,8 @@ void setup() {
     // Define the name visible when pairing this device.
     BLEDevice::init("CellBot");
     BLEServer *pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new CellBotServerCallback());
+
     BLEService *pService = pServer->createService(SERVICE_UUID);
 
     BLECharacteristic *pCharacteristic = pService->createCharacteristic(

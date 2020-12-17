@@ -68,7 +68,7 @@ class CellBotBle {
         // If true, the server (BLE device / CellBot) is little-endian; if false, big-endian.
         this.is_little_endian = true;
         // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
-        this.verbose_return = false;
+        this.verbose_return = true;
 
         // #defines from Arduino headers.
         this.INPUT = 1;
@@ -249,9 +249,13 @@ class CellBotBle {
 }
 
 
+// CellBotBleGui
+// =============
 // Provide a simple pair/disconnect GUI for the CellBot Bluetooth connection.
 class CellBotBleGui {
     constructor(pair_button_id, pair_status_id) {
+        auto_bind(this);
+
         this.ble_pair_button = document.getElementById(pair_button_id);
         this.ble_pair_status = document.getElementById(pair_status_id);
 
@@ -286,8 +290,11 @@ class CellBotBleGui {
 }
 
 
+// A single instance of this class.
 let cell_bot_ble_gui;
 
+// Handler
+// =======
 // Handle a click to the "Pair" (or "Disconnect") button.
 function ble_pair_clicked()
 {
@@ -296,3 +303,34 @@ function ble_pair_clicked()
     }
     cell_bot_ble_gui.async_on_pair_clicked().then();
 }
+
+
+/* Test code
+import cellbotics
+
+# Define the pin numbers we need.
+LED1 = 2
+PB1 = 0
+
+# Set up PWM
+channel = 0
+
+# Setup
+cb = cellbotics.CellBot()
+cb.pinMode(LED1, cb.OUTPUT)
+cb.pinMode(PB1, cb.INPUT)
+
+# Blink the LED until the pushbutton is pressed.
+out = 0
+while True:
+    val, msg = cb.digitalRead(PB1)
+    if not val:
+        break
+    out = not out
+    cb.digitalWrite(LED1, out)
+
+cb.ledcSetup(channel, 1000, 16)
+cb.ledcAttachPin(LED1, channel)
+cb.ledcWrite(channel, 5000)
+#debugger;
+*/
