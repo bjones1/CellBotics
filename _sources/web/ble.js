@@ -56,7 +56,6 @@ function auto_bind(self) {
 }
 
 
-
 // CellBotBle
 // ==========
 // This sends and receives data to the CellBot via Bluetooth.
@@ -70,15 +69,31 @@ class CellBotBle {
         // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
         this.verbose_return = true;
 
-        // #defines from Arduino headers.
         this.INPUT = 1;
         this.OUTPUT = 2;
     }
 
+    // #defines from Arduino headers.
+    static INPUT = 1;
+    static OUTPUT = 2;
+
+    // UUIDs for each characteristic.
+    static uuid = {
+        pinMode: "6ea6d9b6-7b7e-451c-ab45-221298e43562",
+        digitalWrite: "d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d",
+        digitalRead: "c370bc79-11c1-4530-9f69-ab9d961aa497",
+        ledcSetup: "6be57cea-3c46-4687-972b-03429d2acf9b",
+        ledcAttachPin: "2cd63861-078f-436f-9ed9-79e57ec8b638",
+        ledcDetachPin: "b9b0cabe-25d8-4965-9259-7d3b6330e940",
+        ledcWrite: "40698030-a343-448f-a9ea-54b39b03bf81"
+    };
 
     // Clear Bluetooth connection-related objects.
     clear_connection() {
         this.server = undefined;
+        this.service = undefined;
+        // A dict of name: ``BluetoothRemoteGATTCharacteristic``.
+        this.characteristic = {};
     }
 
     // Returns true if the Bluetooth device (server) is connected.
@@ -108,16 +123,7 @@ class CellBotBle {
         }
 
         // Get the service for our server.
-        let service = await this.server.getPrimaryService(cellBot_service);
-
-        // Get the characteristic for this service.
-        this.pinMode_char = await service.getCharacteristic("6ea6d9b6-7b7e-451c-ab45-221298e43562");
-        this.digitalWrite_char = await service.getCharacteristic("d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d");
-        this.digitalRead_char = await service.getCharacteristic("c370bc79-11c1-4530-9f69-ab9d961aa497");
-        this.ledcSetup_char = await service.getCharacteristic("6be57cea-3c46-4687-972b-03429d2acf9b");
-        this.ledcAttachPin_char = await service.getCharacteristic("2cd63861-078f-436f-9ed9-79e57ec8b638");
-        this.ledcDetachPin_char = await service.getCharacteristic("b9b0cabe-25d8-4965-9259-7d3b6330e940");
-        this.ledcWrite_char = await service.getCharacteristic("40698030-a343-448f-a9ea-54b39b03bf81");
+        this.service = await this.server.getPrimaryService(cellBot_service);
     }
 
     // Generic access function for calling a function on the Arduino. It returns (value returned after invoking the function, message).
@@ -189,19 +195,27 @@ class CellBotBle {
         return [return_value, message];
     }
 
+    // Return an existing instance of a ``BluetoothRemoteGATTCharacteristic`` or create a new one.
+    async get_characteristic(name) {
+        if (name in this.characteristic) {
+            return this.characteristic[name];
+        }
+        return this.characteristic[name] = await this.service.getCharacteristic(CellBotBle.uuid[name]);
+    }
+
     // Invoke `pinMode <https://www.arduino.cc/reference/en/language/functions/digital-io/pinmode/>`_ on the Arduino.
     async pinMode(u8_pin, u8_mode) {
-        return this.invoke_Arduino(this.pinMode_char, 0, new Uint8Array([u8_pin, u8_mode]));
+        return this.invoke_Arduino(await this.get_characteristic("pinMode"), 0, new Uint8Array([u8_pin, u8_mode]));
     }
 
     // Invoke `digitalWrite <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalwrite/>`_ on the Arduino.
     async digitalWrite(u8_pin, u8_value) {
-        return this.invoke_Arduino(this.digitalWrite_char, 0, new Uint8Array([u8_pin, u8_value]));
+        return this.invoke_Arduino(await this.get_characteristic("digitalWrite"), 0, new Uint8Array([u8_pin, u8_value]));
     }
 
     // Invoke `digitalRead <https://www.arduino.cc/reference/en/language/functions/digital-io/digitalread/>`_ on the Arduino.
     async digitalRead(u8_pin) {
-        return this.invoke_Arduino(this.digitalRead_char, 1, new Uint8Array([u8_pin]));
+        return this.invoke_Arduino(await this.get_characteristic("digitalRead"), 1, new Uint8Array([u8_pin]));
     }
 
     // Invoke ``ledcSetup`` on the Arduino.
@@ -219,14 +233,14 @@ class CellBotBle {
         dv.setUint8(0, u8_channel);
         dv.setFloat64(1, d_freq, this.is_little_endian);
         dv.setUint8(10, u8_resolution_bits);
-        return this.invoke_Arduino(this.ledcSetup_char, 0.8, param_array);
+        return this.invoke_Arduino(await this.get_characteristic("ledcSetup"), 0.8, param_array);
     }
 
     // Invoke ``ledcAttachPin`` on the Arduino.
     //
     // Next, attach this channel to a specific pin on the Arduino.
     async ledcAttachPin(u8_pin, u8_channel) {
-        return this.invoke_Arduino(this.ledcAttachPin_char, 0, new Uint8Array([u8_pin, u8_channel]));
+        return this.invoke_Arduino(await this.get_characteristic("ledcAttachPin"), 0, new Uint8Array([u8_pin, u8_channel]));
     }
 
     // Invoke ``ledcWrite`` on the Arduino.
@@ -237,14 +251,14 @@ class CellBotBle {
         let dv = new DataView(param_array);
         dv.setUint8(0, u8_channel);
         dv.setUint32(1, u32_duty, this.is_little_endian);
-        return this.invoke_Arduino(this.ledcWrite_char, 0, param_array);
+        return this.invoke_Arduino(await this.get_characteristic("ledcWrite"), 0, param_array);
     }
 
     // Invoke ``ledcDetachPin`` on the Arduino.
     //
     // Next, attach this channel to a specific pin on the Arduino.
     async ledcDetachPin(u8_pin) {
-        return this.invoke_Arduino(this.ledcDetachPin_char, 0, new Uint8Array([u8_pin]));
+        return this.invoke_Arduino(await this.get_characteristic("ledcDetachPin"), 0, new Uint8Array([u8_pin]));
     }
 }
 
