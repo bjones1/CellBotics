@@ -326,7 +326,7 @@ function ble_pair_clicked()
 }
 
 
-/* Test code
+/** Test code
 import cellbotics
 
 # Define the pin numbers we need.
