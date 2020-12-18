@@ -25,7 +25,8 @@ To do
 -   Test WebBLE, then add it to the hardware section of the book
 -   Write up basic hardware connection instructions, a parts lits, etc.
 -   Figure out why reprogramming is flaky -- see the `issue <https://github.com/espressif/esptool/issues/19>`_.
--   Stop the robot if the Bluetooth disconnects.
+-   Provide an reset function, to be called when first talking to the device or as an e-stop on disconnect.
+-   Provide some kind of version/CPU info, so we could talk to an older version of the code or to other types of chip.
 
 
 Programs

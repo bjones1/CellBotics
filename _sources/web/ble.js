@@ -79,6 +79,7 @@ class CellBotBle {
 
     // UUIDs for each characteristic.
     static uuid = {
+        resetHardware: "60cb180e-838d-4f65-aff4-20b609b453f3",
         pinMode: "6ea6d9b6-7b7e-451c-ab45-221298e43562",
         digitalWrite: "d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d",
         digitalRead: "c370bc79-11c1-4530-9f69-ab9d961aa497",
@@ -201,6 +202,12 @@ class CellBotBle {
             return this.characteristic[name];
         }
         return this.characteristic[name] = await this.service.getCharacteristic(CellBotBle.uuid[name]);
+    }
+
+    // Reset the hardware on the connected device.
+    async resetHardware() {
+        // Any write is fine -- just send 1 byte.
+        return this.invoke_Arduino(await this.get_characteristic("resetHardware"), 0, new Uint8Array([1]));
     }
 
     // Invoke `pinMode <https://www.arduino.cc/reference/en/language/functions/digital-io/pinmode/>`_ on the Arduino.

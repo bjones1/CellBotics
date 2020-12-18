@@ -41,6 +41,8 @@
 //
 // The UUID for the CellBot service.
 #define SERVICE_UUID ("6c533793-9bd6-47d6-8d3b-c10a704b6b97")
+// Characteristic for resetHardware.
+#define RESET_HARDWARE_CHARACTERISTIC_UUID ("60cb180e-838d-4f65-aff4-20b609b453f3")
 // Characteristic for pinMode.
 #define PIN_MODE_CHARACTERISTIC_UUID ("6ea6d9b6-7b7e-451c-ab45-221298e43562")
 // Characteristic for digitalWrite
@@ -60,8 +62,22 @@
 #define VERBOSE_RETURN
 
 
+// Reset
+// =====
+// Reset the device to a power-on like state in terms of the I/Os affected by the characteristics above. Also used as an e-stop when Bluetooth disconnects.
+void reset_hardware() {
+
+#ifdef VERBOSE_RETURN
+    Serial.println("reset_hardware()");
+#endif
+
+    // TODO.
+}
+
+
 // Characteristic callbacks
 // ========================
+// Provide return values and checks used by all the following characteristics.
 class InvokeArduinoCallback: public BLECharacteristicCallbacks {
     public:
     // A buffer for messages; a C string.
@@ -93,6 +109,17 @@ class InvokeArduinoCallback: public BLECharacteristicCallbacks {
         ret.clear();
         return true;
     };
+};
+
+
+// Any write to this characteristic invokes ``reset_hardware``.
+class ResetHardwareCallback: public InvokeArduinoCallback {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+            reset_hardware();
+#ifdef VERBOSE_RETURN
+            ret.assign("reset_hardware()");
+#endif
+    }
 };
 
 
@@ -262,13 +289,13 @@ class LedcWriteCallback: public InvokeArduinoCallback {
 };
 
 
-// On a server disconnect, turn off the motors.
+// On a server disconnect, reset.
 class CellBotServerCallback : public BLEServerCallbacks {
     virtual void onDisconnect(BLEServer* pServer) {
 #ifdef VERBOSE_RETURN
-            Serial.println("BLE disconnected.");
+        Serial.println("BLE disconnected.");
 #endif
-        // TODO.
+        reset_hardware();
     };
 };
 
@@ -284,9 +311,19 @@ void setup() {
     BLEServer *pServer = BLEDevice::createServer();
     pServer->setCallbacks(new CellBotServerCallback());
 
+    // Define the primary service for this server.
     BLEService *pService = pServer->createService(SERVICE_UUID);
 
+    // Define characteristics for this server
+    //***************************************
     BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+        RESET_HARDWARE_CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_WRITE
+    );
+    pCharacteristic->setCallbacks(new ResetHardwareCallback());
+
+    pCharacteristic = pService->createCharacteristic(
         PIN_MODE_CHARACTERISTIC_UUID,
         BLECharacteristic::PROPERTY_READ |
         BLECharacteristic::PROPERTY_WRITE
@@ -335,6 +372,7 @@ void setup() {
     );
     pCharacteristic->setCallbacks(new ledcDetachPinCallback());
 
+    // Complete Bluetooth config.
     pService->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
@@ -350,4 +388,5 @@ void setup() {
 void loop() {
     // put your main code here, to run repeatedly:
     delay(2000);
+    // TODO: can we sleep / enter a low-power mode?
 }
