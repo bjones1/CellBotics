@@ -13,4 +13,4 @@ Change Log
 **********
 -   `Github master <https://github.com/bjones1/CodeChat_system.git>`_:
 
-    -   Inital commits.
+    -   Initial commits.
