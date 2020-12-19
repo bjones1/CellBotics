@@ -97,6 +97,21 @@ class CellBotBle {
         this.characteristic = {};
     }
 
+    // Return true if BLE is supported by this browser. Even if it is supported, it may not be available.
+    is_ble_supported() {
+        return Boolean(navigator.bluetooth);
+    }
+
+    // Return true is BLE is supported. If so, register the provided event handler.
+    async has_ble(on_availability_changed) {
+        if (this.is_ble_supported() && await navigator.bluetooth.getAvailability()) {
+            navigator.bluetooth.addEventListener("availabilitychanged", on_availability_changed);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // Returns true if the Bluetooth device (server) is connected.
     paired() {
         return this.server && this.server.connected;
@@ -281,6 +296,12 @@ class CellBotBleGui {
         this.ble_pair_status = document.getElementById(pair_status_id);
 
         this.cell_bot_ble = new CellBotBle();
+        // Update the pair button based on BLE availability.
+        this.cell_bot_ble.has_ble(this.on_availability_changed).then(this.on_ble_available);
+        // Respond to button clicks.
+        this.ble_pair_button.addEventListener("click", event => {
+            this.async_on_pair_clicked();
+        })
     }
 
     async async_on_pair_clicked() {
@@ -304,6 +325,20 @@ class CellBotBleGui {
         }
     }
 
+    on_availability_changed(event) {
+        // TODO: I don't know what the structure of this event is.
+        console.log(event);
+    }
+
+    on_ble_available(has_ble) {
+        this.ble_pair_button.disabled = !has_ble;
+        if (has_ble) {
+            this.ble_pair_status.innerHTML = "Not connected.";
+        } else {
+            this.ble_pair_status.innerHTML = "Not available.";
+        }
+    }
+
     on_disconnect() {
         this.ble_pair_status.innerHTML = "Disconnected.";
         this.ble_pair_button.innerHTML = "Pair";
@@ -317,12 +352,9 @@ let cell_bot_ble_gui;
 // Handler
 // =======
 // Handle a click to the "Pair" (or "Disconnect") button.
-function ble_pair_clicked()
+function on_dom_ready()
 {
-    if (cell_bot_ble_gui === undefined) {
-        cell_bot_ble_gui = new CellBotBleGui("ble_pair_button", "ble_pair_status");
-    }
-    cell_bot_ble_gui.async_on_pair_clicked().then();
+    cell_bot_ble_gui = new CellBotBleGui("ble_pair_button", "ble_pair_status");
 }
 
 
