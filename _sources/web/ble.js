@@ -69,25 +69,22 @@ class CellBotBle {
         // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
         this.verbose_return = true;
 
+        // #defines from Arduino headers.
         this.INPUT = 1;
         this.OUTPUT = 2;
+
+        // UUIDs for each characteristic.
+        this.uuid = {
+            resetHardware: "60cb180e-838d-4f65-aff4-20b609b453f3",
+            pinMode: "6ea6d9b6-7b7e-451c-ab45-221298e43562",
+            digitalWrite: "d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d",
+            digitalRead: "c370bc79-11c1-4530-9f69-ab9d961aa497",
+            ledcSetup: "6be57cea-3c46-4687-972b-03429d2acf9b",
+            ledcAttachPin: "2cd63861-078f-436f-9ed9-79e57ec8b638",
+            ledcDetachPin: "b9b0cabe-25d8-4965-9259-7d3b6330e940",
+            ledcWrite: "40698030-a343-448f-a9ea-54b39b03bf81"
+        };
     }
-
-    // #defines from Arduino headers.
-    static INPUT = 1;
-    static OUTPUT = 2;
-
-    // UUIDs for each characteristic.
-    static uuid = {
-        resetHardware: "60cb180e-838d-4f65-aff4-20b609b453f3",
-        pinMode: "6ea6d9b6-7b7e-451c-ab45-221298e43562",
-        digitalWrite: "d3423cf6-6da7-4dd8-a5ba-3c980c74bd6d",
-        digitalRead: "c370bc79-11c1-4530-9f69-ab9d961aa497",
-        ledcSetup: "6be57cea-3c46-4687-972b-03429d2acf9b",
-        ledcAttachPin: "2cd63861-078f-436f-9ed9-79e57ec8b638",
-        ledcDetachPin: "b9b0cabe-25d8-4965-9259-7d3b6330e940",
-        ledcWrite: "40698030-a343-448f-a9ea-54b39b03bf81"
-    };
 
     // Clear Bluetooth connection-related objects.
     clear_connection() {
@@ -216,7 +213,7 @@ class CellBotBle {
         if (name in this.characteristic) {
             return this.characteristic[name];
         }
-        return this.characteristic[name] = await this.service.getCharacteristic(CellBotBle.uuid[name]);
+        return this.characteristic[name] = await this.service.getCharacteristic(this.uuid[name]);
     }
 
     // Reset the hardware on the connected device.
@@ -346,12 +343,12 @@ class CellBotBleGui {
 }
 
 
-// A single instance of this class.
+// An instance of this class.
 let cell_bot_ble_gui;
 
 // Handler
 // =======
-// Handle a click to the "Pair" (or "Disconnect") button.
+// This must be invoked when the DOM is ready, before calling any other function in this file.
 function on_dom_ready()
 {
     cell_bot_ble_gui = new CellBotBleGui("ble_pair_button", "ble_pair_status");
