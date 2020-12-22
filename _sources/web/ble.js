@@ -68,6 +68,8 @@ class CellBotBle {
         this.is_little_endian = true;
         // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
         this.verbose_return = true;
+        // If true, return dummy values instead of talking to the hardware.
+        this.is_sim = true;
 
         // #defines from Arduino headers.
         this.INPUT = 1;
@@ -101,6 +103,10 @@ class CellBotBle {
 
     // Return true is BLE is supported. If so, register the provided event handler.
     async has_ble(on_availability_changed) {
+        if (this.is_sim) {
+            return true;
+        }
+
         if (this.is_ble_supported() && await navigator.bluetooth.getAvailability()) {
             navigator.bluetooth.addEventListener("availabilitychanged", on_availability_changed);
             return true;
@@ -111,12 +117,20 @@ class CellBotBle {
 
     // Returns true if the Bluetooth device (server) is connected.
     paired() {
+        if (this.is_sim) {
+            return true;
+        }
+
         return this.server && this.server.connected;
     }
 
     // Pair with a CellBot and return the characteristic used to control the device.
     async pair(disconnect_callback)
     {
+        if (this.is_sim) {
+            return;
+        }
+
         // Request a device with service `UUIDs`. See the `Bluetooth API <https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth>`_.
         let cellBot_service = "6c533793-9bd6-47d6-8d3b-c10a704b6b97";
 
@@ -154,6 +168,10 @@ class CellBotBle {
         // An ArrayBuffer or compatible type of data containing encoded parameters to send.
         param_array
     ) {
+        if (this.is_sim) {
+            return [0, ""];
+        }
+
         await characteristic.writeValue(param_array);
         // Read the returned data.
         let return_data = await characteristic.readValue();
@@ -210,6 +228,10 @@ class CellBotBle {
 
     // Return an existing instance of a ``BluetoothRemoteGATTCharacteristic`` or create a new one.
     async get_characteristic(name) {
+        if (this.is_sim) {
+            return name;
+        }
+
         if (name in this.characteristic) {
             return this.characteristic[name];
         }
