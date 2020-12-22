@@ -69,7 +69,7 @@ class CellBotBle {
         // If true, expect verbose returns (the CellBot was compiled with ``VERBOSE_RETURN`` defined).
         this.verbose_return = true;
         // If true, return dummy values instead of talking to the hardware.
-        this.is_sim = true;
+        this.is_sim = false;
 
         // #defines from Arduino headers.
         this.INPUT = 1;
