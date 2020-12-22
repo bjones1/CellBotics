@@ -329,8 +329,9 @@ htmlhelp_basename = 'PythonCoursewareProjectdoc'
 #showeval_div_class = 'runestone explainer alert alert-warning'
 #tabbed_div_class = 'alert alert-warning'
 
+
 # Add the BLE JS.
 def setup(app):
     runestone_setup(app)
     app.add_autoversioned_javascript("ble.js")
-    #app.add_autoversioned_javascript("cellbot_skulpt.js")
+    app.add_autoversioned_javascript("sensor.js")
