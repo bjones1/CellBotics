@@ -48,10 +48,12 @@ class SimpleSensor {
             throw "Not available.";
         }
 
-        // Get permission to use these sensors.
-        let result = await Promise.all(sensor_permission.map(x => navigator.permissions.query({ name: x })));
-        if (result.state === "denied") {
-            throw `Permission to use the ${sensor_permission} sensor was denied.`;
+        // Get permission to use these sensors, if the API is supported.
+        if (navigator.permissions) {
+            let result = await Promise.all(sensor_permission.map(x => navigator.permissions.query({ name: x })));
+            if (result.state === "denied") {
+                throw `Permission to use the ${sensor_permission} sensor was denied.`;
+            }
         }
 
         // To access a sensor:
