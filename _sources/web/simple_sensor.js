@@ -163,7 +163,7 @@ class SimpleOrientationSensor extends SimpleSensor {
 
 // Concrete classes
 // ================
-// Note the use of ``window.SensorName`` instead of ``SensorName``. This avoids exceptions if the particular sensor isn't defined, producing an ``undefined`` instead.
+// Note the use of ``window.SensorName`` instead of ``SensorName`` for non-polyfills. This avoids exceptions if the particular sensor isn't defined, producing an ``undefined`` instead. For polyfills, we must use ``SensorName`` instead of ``window.SensorName``.
 class SimpleAmbientLightSensor extends SimpleSensor {
     async start(als_options) {
         return super.start(window.AmbientLightSensor, ["ambient-light-sensor"], als_options);
@@ -175,25 +175,69 @@ class SimpleAmbientLightSensor extends SimpleSensor {
 }
 
 
+// See the `W3C draft spec <https://w3c.github.io/geolocation-sensor/#geolocationsensor-interface>`_.
+class SimpleGeolocationSensor extends SimpleSensor {
+    async start(geo_options) {
+        return super.start(GeolocationSensor, ["geolocation"], geo_options);
+    }
+
+    get latitude() {
+        return this.sensor.latitude;
+    }
+
+    get longitude() {
+        return this.sensor.longitude;
+    }
+
+    get altitude() {
+        return this.sensor.altitude;
+    }
+
+    get accuracy() {
+        return this.sensor.accuracy;
+    }
+
+    get altitudeAccuracy() {
+        return this.sensor.altitudeAccuracy;
+    }
+
+    get heading() {
+        return this.sensor.heading;
+    }
+
+    get speed() {
+        return this.sensor.speed;
+    }
+}
+
+
 class SimpleAccelerometer extends SimpleXYZSensor {
     async start(accelerometer_options) {
-        return super.start(window.Accelerometer, ["accelerometer"], accelerometer_options);
+        return super.start(Accelerometer, ["accelerometer"], accelerometer_options);
     }
 }
 
 
 class SimpleGyroscope extends SimpleXYZSensor {
     async start(gyro_options) {
-        return super.start(window.Gyroscope, ["gyroscope"], gyro_options);
+        return super.start(Gyroscope, ["gyroscope"], gyro_options);
     }
 }
 
 
 class SimpleLinearAccelerationSensor extends SimpleXYZSensor {
     async start(accel_options) {
-        return super.start(window.LinearAccelerationSensor, ["accelerometer"], accel_options);
+        return super.start(LinearAccelerationSensor, ["accelerometer"], accel_options);
     }
 }
+
+
+class SimpleGravitySensor extends SimpleXYZSensor {
+    async start(grav_options) {
+        return super.start(GravitySensor, ["accelerometer"], grav_options);
+    }
+}
+
 
 class SimpleMagnetometer extends SimpleXYZSensor {
     async start(mag_options) {
@@ -204,14 +248,14 @@ class SimpleMagnetometer extends SimpleXYZSensor {
 
 class SimpleAbsoluteOrientationSensor extends SimpleOrientationSensor {
     async start(orient_options) {
-        return super.start(window.AbsoluteOrientationSensor, ["accelerometer", "gyroscope", "magnetometer"], orient_options);
+        return super.start(AbsoluteOrientationSensor, ["accelerometer", "gyroscope", "magnetometer"], orient_options);
     }
 }
 
 
 class SimpleRelativeOrientationSensor extends SimpleOrientationSensor {
     async start(orient_options) {
-        return super.start(window.RelativeOrientationSensor, ["accelerometer", "gyroscope"], orient_options);
+        return super.start(RelativeOrientationSensor, ["accelerometer", "gyroscope"], orient_options);
     }
 }
 
