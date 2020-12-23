@@ -166,12 +166,6 @@ CodeChat_lexer_for_glob = {
     "codechat_config.json": "Perl",
 }
 #
-# **CodeChat note::** This is a list of exclude_patterns_ which applies only to
-# source documents; exclude_patterns_ will exclude the given files from all of
-# Sphinx (for example, files here won't be included even if they're mentioned in
-# html_static_path_.
-CodeChat_excludes = []
-#
 # Inline syntax highlight
 # -----------------------
 # `inline_highlight_respect_highlight <https://sphinxcontrib-inlinesyntaxhighlight.readthedocs.io/en/latest/#confval-inline_highlight_respect_highlight>`_:
@@ -259,7 +253,7 @@ html_short_title ='CellBotics'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files, so
 # a file named ``default.css`` will overwrite the builtin ``default.css``.
-html_static_path = runestone_static_dirs() + ["_sources/web"]
+html_static_path = runestone_static_dirs() + ["_sources/web", "_sources/web/polyfill"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -333,5 +327,11 @@ htmlhelp_basename = 'PythonCoursewareProjectdoc'
 # Add the BLE JS.
 def setup(app):
     runestone_setup(app)
+    # Include JavaScript from this book.
     app.add_autoversioned_javascript("ble.js")
+    app.add_autoversioned_javascript("simple_sensor.js")
+
+    # Include a polyfill for the Sensor API.
     app.add_autoversioned_javascript("sensor.js")
+    app.add_autoversioned_javascript("motion-sensors.js")
+    app.add_autoversioned_javascript("geolocation-sensor.js")
