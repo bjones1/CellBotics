@@ -90,6 +90,7 @@ class CellBotBle {
 
     // Clear Bluetooth connection-related objects.
     clear_connection() {
+        this.server && this.server.disconnect();
         this.server = undefined;
         this.service = undefined;
         // A dict of name: ``BluetoothRemoteGATTCharacteristic``.
@@ -117,11 +118,7 @@ class CellBotBle {
 
     // Returns true if the Bluetooth device (server) is connected.
     paired() {
-        if (this.is_sim) {
-            return true;
-        }
-
-        return this.server && this.server.connected;
+        return this.is_sim || (this.server && this.server.connected);
     }
 
     // Pair with a CellBot and return the characteristic used to control the device.
@@ -131,23 +128,28 @@ class CellBotBle {
             return;
         }
 
+        // Skip connecting if we're already connected.
+        if (this.paired()) {
+            return;
+        }
+
+        // Shut down any remnants of a previous connection.
+        this.clear_connection();
+
         // Request a device with service `UUIDs`. See the `Bluetooth API <https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth>`_.
         let cellBot_service = "6c533793-9bd6-47d6-8d3b-c10a704b6b97";
+        this.device = await navigator.bluetooth.requestDevice({
+            filters: [{
+                services: [cellBot_service]
+            }]
+        });
 
-        // Skip connecting if we're already connected.
-        if (!this.paired()) {
-            this.device = await navigator.bluetooth.requestDevice({
-                filters: [{
-                    services: [cellBot_service]
-                }]
-            });
+        // Notify on a disconnect. I can't find any docs on this, but it does work.
+        this.device.addEventListener('gattserverdisconnected', disconnect_callback);
+        this.device.addEventListener('gattserverdisconnected', this.clear_connection);
 
-            // Notify on a disconnect. I can't find any docs on this, but it does work.
-            this.device.addEventListener('gattserverdisconnected', disconnect_callback);
-
-            // Connect to its server.
-            this.server = await this.device.gatt.connect();
-        }
+        // Connect to its server.
+        this.server = await this.device.gatt.connect();
 
         // Get the service for our server.
         this.service = await this.server.getPrimaryService(cellBot_service);
