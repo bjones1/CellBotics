@@ -11,11 +11,11 @@
 *************
 Web interface
 *************
-This directory contains files to explore interfacing with a CellBot via BLE.
+This directory contains files to explore interfacing with a CellBot via BLE. This depends on a `polyfill for the Sensor API <https://github.com/kenchris/sensor-polyfills>`_.
 
 .. toctree::
     :maxdepth: 2
 
     ble.html
     ble.js
-    sensor.js
+    simple_sensor.js
