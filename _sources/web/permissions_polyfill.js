@@ -36,16 +36,23 @@ if (
                 case "accelerometer":
                 case "gyroscope":
                 // The requested permissions doesn't allow us to determine which of the following two permissions we need, so ask for both.
-                return Promise.all([
-                    // The polyfill for the accelerometer, gyro, and related classes needs just this.
-                    DeviceMotionEvent.requestPermission(),
-                    // The polyfill for the orientation sensors needs just this.
-                    DeviceOrientationEvent.requestPermission()
-                ]);
+                return new Promise((resolve, reject) => {
+                    Promise.all([
+                        // The polyfill for the accelerometer, gyro, and related classes needs just this.
+                        DeviceMotionEvent.requestPermission(),
+                        // The polyfill for the orientation sensors needs just this.
+                        DeviceOrientationEvent.requestPermission()
+                    ]).then(
+                        // We now have an array of strings, the result of the requestPermission calls. If all are "granted", then return {state: "granted"}, else return {state: "denied"}.
+                        vals => resolve({state:
+                            (vals.every(x => x === "granted") ? "granted" : "denied")
+                        })
+                    )
+                });
 
                 // There's nothing else that needs permission to work.
                 default:
-                return Promise.resolve("granted");
+                return Promise.resolve({state: "granted"});
             }
         }
     };
