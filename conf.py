@@ -330,6 +330,7 @@ def setup(app):
     # Include JavaScript from this book.
     app.add_autoversioned_javascript("ble.js")
     app.add_autoversioned_javascript("simple_sensor.js")
+    app.add_autoversioned_javascript("permissions_polyfill.js")
 
     # Include a polyfill for the Sensor API.
     app.add_autoversioned_javascript("sensor.js")

@@ -19,3 +19,4 @@ This directory contains files to explore interfacing with a CellBot via BLE. Thi
     ble.html
     ble.js
     simple_sensor.js
+    permissions_polyfill.js
