@@ -22,6 +22,13 @@ This books enables you to build your own CellBot -- a simple moving base combine
     docs/LICENSE
 
 
+Robotics links
+==============
+*   https://cs.brynmawr.edu/~dblank/
+*   Finch - https://ideaillinois.org/birdbrain
+*   https://www.raspberrypi.org/blog/raspberry-pi-and-google-code-next-bring-computer-science-to-1000-chicago-students/
+
+
 License
 =======
 Copyright (C) 2012-2020 Bryan A. Jones.
