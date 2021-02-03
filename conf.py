@@ -91,7 +91,7 @@ release = '0.0'
 # `exclude_patterns <http://sphinx-doc.org/config.html#confval-exclude_patterns>`_:
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ["web/sensor_polyfill"]
 
 # `default_role <http://www.sphinx-doc.org/en/stable/config.html#confval-default_role>`_
 # The name of a reST role (builtin or Sphinx extension) to use as the default
@@ -253,7 +253,7 @@ html_short_title ='CellBotics'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files, so
 # a file named ``default.css`` will overwrite the builtin ``default.css``.
-html_static_path = runestone_static_dirs() + ["_sources/web", "_sources/web/polyfill"]
+html_static_path = runestone_static_dirs() + ["_sources/web", "_sources/web/sensor_polyfill"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
