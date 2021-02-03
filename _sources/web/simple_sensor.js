@@ -271,7 +271,7 @@ from time import sleep
 s = cellbotics.Accelerometer()
 s.start()
 for i in range(10):
-    print(s.x(), s.y(), s.z())
+    print(s.x, s.y, s.z)
     sleep(1)
 s.stop()
  */
