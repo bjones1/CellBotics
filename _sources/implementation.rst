@@ -11,9 +11,10 @@
 **************
 Implementation
 **************
-This section of the book presents the core code which implements the CellBot's ability to connect a smart device to the mobile base. It consists of two programs:
+This section of the book presents the core code which implements the CellBot's ability to connect a smart device to the mobile base and to access sensors on a smart device. It consists of three components:
 
--   JavaScript code which runs in a web browser and send commands to the ESP32 microcontroller on the mobile base.
+-   JavaScript code which runs in a web browser and send commands to the ESP32 microcontroller on the mobile base. This is available in `Runestone Components <https://runestonecomponents.readthedocs.io/en/latest/runestone/cellbotics/toctree.html>`_.
+-   A Skulpt wrapper around this JavaScript to make it available in Python.
 -   Arduino/C++ code which runs on the ESP32 mobile base which receives commands from the web browser, executes them, then returns the results back to the browser.
 
 It also contains files used to create this book.
