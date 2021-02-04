@@ -13,10 +13,6 @@ Setup
 *****
 This page covers the setup needed to start experimenting with your CellBot!
 
-.. raw:: html
-
-    <button id="ble_pair_button" type="button" disabled>Pair</button>
-    <span id="ble_pair_status"></span>
-    <script>$(document).ready(on_dom_ready);</script>
+.. ble-pair-button::
 
 .. activecode:: bCulhkWMfG

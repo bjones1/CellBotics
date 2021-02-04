@@ -39,8 +39,9 @@ import sys, os
 #sys.path.insert(0, os.path.abspath('../modules'))
 
 from runestone import runestone_static_dirs, runestone_extensions
-from runestone import setup as runestone_setup
+from runestone import setup
 import pkg_resources
+
 
 # -- General configuration -----------------------------------------------------
 
@@ -91,7 +92,7 @@ release = '0.0'
 # `exclude_patterns <http://sphinx-doc.org/config.html#confval-exclude_patterns>`_:
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["web/sensor_polyfill"]
+exclude_patterns = []
 
 # `default_role <http://www.sphinx-doc.org/en/stable/config.html#confval-default_role>`_
 # The name of a reST role (builtin or Sphinx extension) to use as the default
@@ -253,7 +254,7 @@ html_short_title ='CellBotics'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files, so
 # a file named ``default.css`` will overwrite the builtin ``default.css``.
-html_static_path = runestone_static_dirs() + ["_sources/web", "_sources/web/sensor_polyfill"]
+html_static_path = runestone_static_dirs()
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -322,17 +323,3 @@ htmlhelp_basename = 'PythonCoursewareProjectdoc'
 #shortanswer_optional_div_class = 'journal alert alert-success'
 #showeval_div_class = 'runestone explainer alert alert-warning'
 #tabbed_div_class = 'alert alert-warning'
-
-
-# Add the BLE JS.
-def setup(app):
-    runestone_setup(app)
-    # Include JavaScript from this book.
-    app.add_autoversioned_javascript("ble.js")
-    app.add_autoversioned_javascript("simple_sensor.js")
-    app.add_autoversioned_javascript("permissions_polyfill.js")
-
-    # Include a polyfill for the Sensor API.
-    app.add_autoversioned_javascript("sensor.js")
-    app.add_autoversioned_javascript("motion-sensors.js")
-    app.add_autoversioned_javascript("geolocation-sensor.js")

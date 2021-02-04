@@ -21,11 +21,8 @@ It also contains files used to create this book.
 
 To do
 =====
--   Write code to interface with cell phone `sensors <https://developer.mozilla.org/en-US/docs/Web/API/Sensor_APIs>`_.
--   Test WebBLE, then add it to the hardware section of the book
 -   Write up basic hardware connection instructions, a parts lits, etc.
 -   Figure out why reprogramming is flaky -- see the `issue <https://github.com/espressif/esptool/issues/19>`_.
--   Provide an reset function, to be called when first talking to the device or as an e-stop on disconnect.
 -   Provide some kind of version/CPU info, so we could talk to an older version of the code or to other types of chip.
 
 
@@ -35,7 +32,6 @@ Programs
     :maxdepth: 2
 
     Arduino/BLE_server/BLE_server.ino
-    web/toctree
     docs/.gitignore
 
 
