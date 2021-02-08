@@ -87,7 +87,7 @@ CellBot
 
     Give control of the pin to the specified PWM channel. After the pin is attached, the pinMode_ no longer determines the output of the pin. Detach it to pass control back to the pinMode_.
 
-    :param: pin: the pin number to attach this PWM channel to. This is the same as the first parmater of pinMode_, digitialRead_, or digitalWrite_.
+    :param: pin: the pin number to attach this PWM channel to. This is the same as the first parameter of pinMode_, digitalRead_, or digitalWrite_.
     :param: channel: The PWM channel to use; a number between 0 and 15.
 
 
