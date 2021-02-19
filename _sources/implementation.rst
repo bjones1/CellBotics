@@ -26,6 +26,80 @@ To do
 -   Figure out why reprogramming is flaky -- see the `issue <https://github.com/espressif/esptool/issues/19>`_.
 -   Provide some kind of version/CPU info, so we could talk to an older version of the code or to other types of chip.
 
+Hardware
+========
+This gives one realization of a CellBot; however, it can easily support a wide variety of motors and be equipped with additional sensors and actuators.
+
+Bill of Materials
+-----------------
+.. list-table::
+    :widths: 5 15 10 60 10
+    :header-rows: 1
+
+    -   -   Qty
+        -   Vendor
+        -   SKU
+        -   Description
+        -   Price (USD)
+    -   -   1
+        -   `Sparkfun <https://www.sparkfun.com>`_
+        -   `PRT-12083 <https://www.sparkfun.com/products/12083>`_
+        -   Battery Holder 4xAA with Cover and Switch
+        -   $1.95
+    -   -   1
+        -   Sparkfun_
+        -   `ROB-13258 <https://www.sparkfun.com/products/13258>`_
+        -   Hobby Gearmotor - 65 RPM (Right Angle, Pair)
+        -   $4.95
+    -   -   1
+        -   Sparkfun_
+        -   `ROB-13259 <https://www.sparkfun.com/products/13259>`_
+        -   Wheel - 65mm (Rubber Tire, Pair)
+        -   $2.95
+    -   -   1
+        -   Sparkfun_
+        -   `ROB-14450 <https://www.sparkfun.com/products/14450>`_
+        -   SparkFun Motor Driver - Dual TB6612FNG (with Headers)
+        -   $5.45
+    -   -   1
+        -   Sparkfun_
+        -   `PRT-00124 <https://www.sparkfun.com/products/124>`_
+        -   Jumper Wire Kit - 140pcs
+        -   $5.95
+    -   -   1
+        -   `Amazon/HiLetgo <https://www.amazon.com/stores/HiLetgo/page/C26BFC88-B8DE-4AD8-AE34-502CCD226542>`_
+        -   `B00LSG5BJK <https://www.amazon.com/dp/B00LSG5BJK>`_
+        -   400 point solderless breadboard, pack of 3
+        -   $5.99
+    -   -   1
+        -   `Amazon/HiLetgo`_
+        -   `B0718T232Z <https://www.amazon.com/dp/B0718T232Z>`_
+        -   HiLetgo ESP-WROOM-32 Development Board 2.4GHz
+        -   $10.99
+    -   -
+        -
+        -   Total
+        -   Includes 3 breadboards; need only 1. No quantity discounts.
+        -   $38.99
+
+Design notes
+------------
+The design presented here is driven by cost and simplicity. Other technical considerations:
+
+Battery voltage
+^^^^^^^^^^^^^^^
+At the heart of the design is an `ESP32-WROOM-32D <https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/modules-and-boards.html#esp32-wroom-32d-esp32-wroom-32u>`_. This development kit contains an `AMS1117-3.3 linear regulator <https://datasheet.lcsc.com/szlcsc/2001081204_Shikues-AMS1117-1-2_C475600.pdf>`_, so its minimum input voltage is 3.3 V + V\ :sub:`drop`, the dropout voltage, where V\ :sub:`drop` = 1.5 V at 1 A. Therefore, the minimum allowable battery voltage is 4.7 V. The recommended maximum input voltage to the AMS1117 is 18 V, which defines the maximum battery voltage for the ESP32.
+
+The DC motors must operate within the provided battery voltage as well. The motors selected above operate between 3 V - 6 V.
+
+Finally, the `TB6612FNG <https://toshiba.semicon-storage.com/ap-en/semiconductor/product/motor-driver-ics/brushed-dc-motor-driver-ics/detail.TB6612FNG.html>`_ motor drivers allow a motor voltage (V\ :sub:`M`) from 2.5 V to 13.5 V.
+
+Combining all three ranges (4.7 V - 18 V, 3 V - 6 V, and 2.5 V - 13.5 V) gives an allowable range of 4.7 V - 6 V for the batteries.
+
+Other notes
+^^^^^^^^^^^
+While many motor drivers (also termed an H-bridge) exist, the TB6612FNG_ is one of the few that operates at a logic supply voltage (V\ :sub:`CC`) of 3.3 V. Since the ESP32 development kit already provides 3.3 V, this voltage drives the selection of a motor driver. For example, the LM298N provides higher drive current, a wider range of motor voltages, and a sense output to allow determination of the drive current (a very nice feature). However, its minimum V\ :sub:`CC` is 4.5 V.
+
 
 Programs
 ========
