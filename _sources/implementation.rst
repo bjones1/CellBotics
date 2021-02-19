@@ -100,6 +100,8 @@ Other notes
 ^^^^^^^^^^^
 While many motor drivers (also termed an H-bridge) exist, the TB6612FNG_ is one of the few that operates at a logic supply voltage (V\ :sub:`CC`) of 3.3 V. Since the ESP32 development kit already provides 3.3 V, this voltage drives the selection of a motor driver. For example, the LM298N provides higher drive current, a wider range of motor voltages, and a sense output to allow determination of the drive current (a very nice feature). However, its minimum V\ :sub:`CC` is 4.5 V.
 
+With a wheel diameter of 65 mm and a no-load speed of 65 RPM for the motors, this robot's max speed is π·65 mm·65 RPM·1 min/60 sec = 0.2 m/s, compared to a typical walking speed of 1.4 m/s.
+
 
 Programs
 ========
