@@ -61,6 +61,26 @@
 // Define this to return a textual description of each function executed to the Bluetooth client, and also print these descriptions to the serial port.
 #define VERBOSE_RETURN
 
+// Hardware
+// ^^^^^^^^
+// The only blue LED on the ESP32.
+#define LED1 (2)
+// The only pushbutton on the ESP32.
+#define PB1 (0)
+
+
+// Configure a pushbutton and LED to enable BLE pairing.
+void configPairing() {
+    // Configure the on-board pushbutton as the pairing enable button.
+    pinMode(LED1, OUTPUT);
+    // Configure the on-board LED controlled by the ESP32 to flash quickly while pairing.
+    pinMode(PB1, INPUT);
+}
+
+// Variables
+// =========
+BLEServer *pServer = NULL;
+
 
 // Reset
 // =====
@@ -289,13 +309,15 @@ class LedcWriteCallback: public InvokeArduinoCallback {
 };
 
 
-// On a server disconnect, reset.
+// On a server disconnect, reset and update paired status.
 class CellBotServerCallback : public BLEServerCallbacks {
     virtual void onDisconnect(BLEServer* pServer) {
 #ifdef VERBOSE_RETURN
         Serial.println("BLE disconnected.");
 #endif
         reset_hardware();
+        // Now that the board isn't connected, allow pairing.
+        configPairing();
     };
 };
 
@@ -308,7 +330,7 @@ void setup() {
 
     // Define the name visible when pairing this device.
     BLEDevice::init("CellBot");
-    BLEServer *pServer = BLEDevice::createServer();
+    pServer = BLEDevice::createServer();
     pServer->setCallbacks(new CellBotServerCallback());
 
     // Define the primary service for this server.
@@ -380,13 +402,36 @@ void setup() {
     // Functions that help with iPhone connections issue. Why is this done twice?
     pAdvertising->setMinPreferred(0x06);
     pAdvertising->setMinPreferred(0x12);
-    BLEDevice::startAdvertising();
     Serial.println("Characteristic defined! Now you can read it in your phone!");
+
+    configPairing();
 }
 
 
 void loop() {
-    // put your main code here, to run repeatedly:
-    delay(2000);
-    // TODO: can we sleep / enter a low-power mode?
+    // Time in 0.1 s intervals since the pair pushbutton was pressed.
+    static uint u_pairing_time_ds = 0;
+
+    // Look for a paring pushbutton press only if we're not connected.
+    if (!pServer->getConnectedCount()) {
+        if (!digitalRead(PB1)) {
+            // Set the timer to 30 s.
+            u_pairing_time_ds = 300;
+            BLEDevice::getAdvertising()->start();
+        }
+    }
+
+    // Blink while pairing.
+    if (u_pairing_time_ds) {
+        --u_pairing_time_ds;
+        // Turn the LED off and pairing off for the last blink.
+        if (!u_pairing_time_ds) {
+            digitalWrite(LED1, 0);
+            BLEDevice::getAdvertising()->stop();
+        } else {
+            digitalWrite(LED1, !digitalRead(LED1));
+        }
+    }
+
+    delay(100);
 }
