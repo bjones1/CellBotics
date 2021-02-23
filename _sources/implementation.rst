@@ -22,9 +22,13 @@ It also contains files used to create this book.
 
 To do
 =====
--   Write up basic hardware connection instructions, a parts lits, etc.
--   Figure out why reprogramming is flaky -- see the `issue <https://github.com/espressif/esptool/issues/19>`_.
+-   Write up basic hardware connection instructions, software install to do ESP32 development if desired.
+-   Add a 10 uF cap between EN and GND to avoid `flaky reprogramming <https://randomnerdtutorials.com/solved-failed-to-connect-to-esp32-timed-out-waiting-for-packet-header/>`_.
 -   Provide some kind of version/CPU info, so we could talk to an older version of the code or to other types of chip.
+-   Fix the reset function to actually reset all pins.
+-   Include a disconnect function so that everything will be turned off after "running" a Python program.
+-   Find a cheaper ESP32 -- some possibilities at https://makeradvisor.com/esp32-development-boards-review-comparison/.
+-   Put the ESP32 to sleep when not paired or no BLE running.
 
 Hardware
 ========
