@@ -13,6 +13,72 @@ Setup
 *****
 This page covers the setup needed to start experimenting with your CellBot!
 
+Some example programs; click on the "view source" button to easily copy and paste the code.
+
+
+Blink the LED until the pushbutton is pressed
+=============================================
+.. code:: Python
+
+    import cellbotics
+
+    # Define the pin numbers we need.
+    LED1 = 2
+    PB1 = 0
+
+    # Set up the pushbutton and LED.
+    cb = cellbotics.CellBot()
+    cb.pinMode(LED1, cb.OUTPUT)
+    cb.pinMode(PB1, cb.INPUT)
+
+    # Blink the LED until the pushbutton is pressed.
+    out = 0
+    while True:
+        # Read the pushbutton.
+        val, msg = cb.digitalRead(PB1)
+        # A value of 0 means the pushbutton is pressed.
+        if not val:
+            break
+
+        # Toggle the LED to make it blink.
+        out = not out
+        cb.digitalWrite(LED1, out)
+
+
+Vary the brightness of the LED
+==============================
+Shake your device to make the LED light up!
+
+.. code:: Python
+
+    import cellbotics
+
+    # Define the pin numbers we need.
+    LED1 = 2
+
+    # Select a PWM channel and configure the LED for PWM.
+    channel = 0
+    cb = cellbotics.CellBot()
+    cb.ledcSetup(channel, 1000, 16)
+    cb.ledcAttachPin(LED1, channel)
+
+    # Start the gyro.
+    gyro = cellbotics.Gyroscope()
+    gyro.start()
+
+    # Read the gyro and display it on the LED.
+    for i in range(20):
+        gyro_x2 = gyro.x**2
+        cb.ledcWrite(channel, min(2**16 - 1, gyro_x2*10000))
+        print(gyro_x2)
+
+
+Your code
+=========
 .. ble-pair-button::
 
 .. activecode:: bCulhkWMfG
+
+.. blockly:: testing
+
+    preload::
