@@ -78,7 +78,3 @@ Your code
 .. ble-pair-button::
 
 .. activecode:: bCulhkWMfG
-
-.. blockly:: testing
-
-    preload::
