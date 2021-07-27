@@ -1,0 +1,1 @@
+.. codeinclude:: ../../codechat_config.yaml
