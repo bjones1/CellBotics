@@ -123,5 +123,5 @@ Book setup and authoring
 
     docs/conf.py
     docs/pavement.py
-    docs/codechat_config.json
+    docs/codechat_config.yaml
     docs/publish.sh
